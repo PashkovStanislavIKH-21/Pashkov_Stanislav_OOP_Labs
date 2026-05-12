@@ -76,13 +76,15 @@ class TimeSeriesAnalysis:
 
     @staticmethod
     def analyze_by_year(df):
-        df['Date Posted'] = pd.to_datetime(df['Date Posted'])
+        # Додаємо format='mixed', щоб pandas автоматично розпізнавав різні розділювачі
+        df['Date Posted'] = pd.to_datetime(df['Date Posted'], dayfirst=False, format='mixed')
+
         df['Year'] = df['Date Posted'].dt.year
         yearly_activity = df.groupby('Year').agg(Job_Count=('Job Title', 'count'))
         return yearly_activity
 
 
-file_path = r'C:\Users\stas2\OneDrive\Робочий стіл\file for lab.3\Job opportunities.csv'
+file_path = r'C:\Users\stas2\OneDrive\Робочий стіл\file for tasks\Job opportunities.csv'
 
 try:
     # 1. Імпорт

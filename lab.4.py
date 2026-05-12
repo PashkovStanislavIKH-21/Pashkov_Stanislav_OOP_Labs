@@ -10,17 +10,22 @@ class DatabaseManager:
         self.cursor = self.conn.cursor()
 
     def load_csv_to_sqlite(self, csv_file, table_name='jobs'):
-        # Завантажуємо дані, пропускаючи проблемні рядки
+        # Завантажуємо дані
         df = pd.read_csv(csv_file, sep=';', on_bad_lines='skip')
-
-        # Видаляємо зайві пробіли з назв стовпців
         df.columns = df.columns.str.strip()
+
+        # --- ДОДАЙТЕ ЦЕЙ БЛОК ДЛЯ РОБОТИ З ДАТОЮ ---
+        if 'Date Posted' in df.columns:
+            # Використовуємо mixed формат, щоб уникнути помилки з попереднього кроку
+            df['Date Posted'] = pd.to_datetime(df['Date Posted'], format='mixed', dayfirst=False)
+            df['Year'] = df['Date Posted'].dt.year # Створюємо стовпець Year
+        # ------------------------------------------
 
         if 'Salary Range' not in df.columns:
             print("ПОМИЛКА: Стовпець 'Salary Range' не знайдено!")
             return
 
-        # Попередня обробка Salary Range
+        # Ваша існуюча логіка обробки зарплати...
         def parse_salary(salary_str):
             if pd.isna(salary_str): return 0
             nums = re.findall(r'\d+', str(salary_str).replace(',', ''))
@@ -32,7 +37,6 @@ class DatabaseManager:
             lambda x: max([int(n) for n in re.findall(r'\d+', str(x).replace(',', ''))] or [0]))
 
         df.index = df.index + 1
-
         df.to_sql(table_name, self.conn, if_exists='replace', index=True, index_label='ID')
         print(f"Дані успішно завантажені в таблицю '{table_name}'.")
 
@@ -106,7 +110,7 @@ class JobAnalytics:
 # 1. Підготовка (Завдання 1)
 db = DatabaseManager('it_jobs_market.db')
 
-file_path = r'C:\Users\stas2\OneDrive\Робочий стіл\file for lab.3\Job opportunities.csv'
+file_path = r'C:\Users\stas2\OneDrive\Робочий стіл\file for tasks\Job opportunities.csv'
 
 try:
     db.load_csv_to_sqlite(file_path)
